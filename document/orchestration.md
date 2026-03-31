@@ -19,15 +19,14 @@ The system consists of:
   - architecture/src-structure.md
 
 - Domains:
-  - domains/auth/domain.md
-  - domains/user/domain.md
+  - domains/*/domain.md
+  - domains/*/tdd.md
 
 - API:
-  - api/auth/api-spec.md
-  - api/user/api-spec.md
+  - api/*/api-spec.md
 
 - Shared:
-  - shared/events.md
+  - shared/*.md
 
 - Decisions:
   - decisions/adr-index.md
@@ -49,31 +48,62 @@ When conflicts occur, follow this order:
 
 ## DOCUMENT SELECTION RULES
 
-### Signup Flow
+### Task Classification
+
+Classify task first, then select documents.
+
+Supported task classes:
+
+- feature
+- bugfix
+- refactor
+- integration
+- migration
+- test-only
+- docs-only
+
+### Mandatory Baseline Documents
+
+MUST USE for all task classes:
+
+- requirements/constraints.md
+- architecture/principle.md
+- architecture/software-architecture.md
+- decisions/adr-index.md
+- decisions/*.md
+
+### Domain-Specific Selection
+
+For each impacted domain `X`:
 
 MUST USE:
-- domains/auth/domain.md
-- domains/user/domain.md
-- shared/events.md
-- api/auth/api-spec.md
-- decisions/*
+- domains/X/domain.md
+- domains/X/tdd.md (if exists)
+- api/X/api-spec.md (if external contract is affected)
 
----
+### Cross-Domain Selection
 
-### Login Flow
+If task touches 2+ domains:
 
-MUST USE:
-- domains/auth/domain.md
-- api/auth/api-spec.md
-- decisions/*
+MUST ALSO USE:
+- shared/*.md relevant to integration contract
+- all impacted domains' domain/TDD/API docs
 
----
+### API Change Selection
 
-### User Management
+If request/response, endpoint, event schema, or DTO changes:
 
 MUST USE:
-- domains/user/domain.md
-- api/user/api-spec.md
+- related api/*/api-spec.md
+- shared/*.md related to contracts/events
+
+### Infra/Platform Selection
+
+If task is infra/platform/internal tooling:
+
+MUST USE:
+- architecture/*.md relevant to dependency/infrastructure rules
+- ADRs related to runtime, deployment, persistence, messaging
 
 ---
 
@@ -85,7 +115,7 @@ When selecting documents:
 - MUST NOT assume knowledge without reading documents
 - MUST treat documents as the source of truth
 
-If a document is listed:
+If a document is selected:
 - it MUST be read before implementation
 
 ---
@@ -94,14 +124,14 @@ If a document is listed:
 
 When performing any task:
 
-1. Identify task type (signup, login, user management, etc.)
-2. Select required documents based on rules
-3. Load all relevant documents into context
+1. Identify task class and impacted domains/contracts
+2. Select required documents by rules
+3. Load all selected documents into context
 4. Apply ADR constraints
-5. Apply domain rules
-6. Apply architecture constraints
-7. Implement solution
-8. Validate solution
+5. Apply domain and architecture constraints
+6. Implement solution incrementally
+7. Validate solution
+8. Complete and report
 
 DO NOT skip any step.
 
@@ -111,7 +141,7 @@ DO NOT skip any step.
 
 - MUST follow Clean Architecture
 - MUST respect domain boundaries
-- MUST use event-driven communication
+- MUST use event-driven communication where defined
 - MUST NOT violate dependency rules
 
 ---
@@ -133,8 +163,11 @@ To support resumable execution, maintain progress state.
 ```json
 {
   "currentTask": "",
+  "taskClass": "",
+  "impactedDomains": [],
   "step": "",
   "completedSteps": [],
+  "selectedDocuments": [],
   "artifacts": []
 }
 ```
@@ -145,9 +178,14 @@ To support resumable execution, maintain progress state.
 
 At each step:
 
-- MUST update step
-- MUST append to completedSteps
+- MUST update `step`
+- MUST append to `completedSteps`
 - MUST persist changes
+
+When scope changes:
+
+- MUST update `impactedDomains`
+- MUST update `selectedDocuments`
 
 Before moving forward:
 
@@ -160,6 +198,7 @@ Before moving forward:
 Use the following step names:
 
 - analyze-task
+- classify-task
 - select-documents
 - load-documents
 - apply-adr
@@ -190,14 +229,16 @@ MUST NOT:
 
 Large tasks MUST be split into:
 
-- API implementation
-- Application layer
-- Domain validation
-- Infrastructure implementation
+- contract/interface updates
+- application/use-case implementation
+- domain model/rules implementation
+- infrastructure implementation
+- integration/verification
 
 ---
 
 ## INCREMENTAL IMPLEMENTATION (IMPORTANT)
+
 - MUST implement in small steps
 - MUST validate each step before proceeding
 - MUST NOT generate entire system at once
@@ -205,14 +246,15 @@ Large tasks MUST be split into:
 ---
 
 ## ARTIFACT TRACKING
+
 - MUST record all created/modified files
 
 Example:
 
 ```json
 "artifacts": [
-  "src/auth/application/signup.service.ts",
-  "src/auth/domain/auth-user.entity.ts"
+  "src/<domain>/application/<use-case>.service.ts",
+  "src/<domain>/domain/<entity-or-policy>.ts"
 ]
 ```
 
@@ -227,13 +269,15 @@ REPEAT until all checks pass:
 1. Run build
 2. Run lint
 3. Run type check (if applicable)
-4. Fix all errors
-5. Re-run all checks
+4. Run tests relevant to impacted scope
+5. Fix all errors/failures
+6. Re-run checks
 
 Exit loop ONLY when:
 
 - build succeeds
 - lint has zero errors
+- relevant tests pass
 
 ---
 
@@ -244,6 +288,7 @@ A task is NOT complete until:
 - Build succeeds
 - Lint passes with zero errors
 - Type checks pass
+- Relevant tests pass
 - No unused imports or variables
 - Code follows conventions
 
@@ -287,22 +332,24 @@ If validation fails:
 After completion:
 
 - MUST report:
-
-Example:
-
-- build: success
-- lint: no errors
-- type-check: success
-- fixes applied: 2
+  - task class
+  - impacted domains
+  - selected documents
+  - build status
+  - lint status
+  - type-check status
+  - test status
+  - fixes applied count
 
 ---
 
 ## VALIDATION CHECKLIST (MANDATORY)
+
 - [ ] Domain rules respected
 - [ ] No cross-domain violation
-- [ ] Events used correctly
+- [ ] Contracts/API/events matched
 - [ ] Architecture rules followed
-- [ ] API spec matched
+- [ ] ADR decisions respected
 
 ---
 
@@ -336,20 +383,22 @@ ALL actions MUST comply with this document.
 
 Before implementation:
 
-- MUST read domain TDD document
+- MUST read impacted domains' tdd.md when present
 - MUST derive required components from test cases
 
 Implementation MUST:
-- satisfy all test cases
+
+- satisfy all applicable test cases
 
 MUST NOT:
-- implement without test definition
+
+- implement without test definition when TDD exists
 
 ---
 
 ## TDD EXECUTION FLOW
 
-1. Read tdd.md
+1. Read impacted `tdd.md`
 2. Extract test cases
 3. Identify required components
 4. Implement minimal code to pass tests
@@ -365,6 +414,6 @@ REPEAT until all tests pass
 
 A task is NOT complete until:
 
-- All test cases are implemented
-- All tests pass
+- All applicable test cases are implemented
+- All relevant tests pass
 - No failing scenarios remain
