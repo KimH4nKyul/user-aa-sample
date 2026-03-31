@@ -17,7 +17,11 @@ export class SignupService {
     private readonly passwordHasher: PasswordHasher,
   ) {}
 
-  public async execute(emailStr: string, password: string, role: UserRole = UserRole.USER): Promise<AuthUser> {
+  public async execute(
+    emailStr: string,
+    password: string,
+    role: UserRole = UserRole.USER,
+  ): Promise<AuthUser> {
     const email = Email.from(emailStr);
 
     // 1. Check uniqueness

@@ -2,19 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserService } from './create-user.service';
 import { UserDomainService } from '../domain/service/user-domain.service';
 import { InMemoryUserRepository } from '../infrastructure/database/in-memory-user.repository';
-import { UserEventPublisher } from '../domain/repository/user-event.publisher';
+import type { UserEventPublisher } from '../domain/repository/user-event.publisher';
 import { UserStatus } from '../domain/types/user-status.enum';
 import { UserRole } from '../../shared/types/user-role.enum';
 
 describe('CreateUserService', () => {
   let service: CreateUserService;
   let repository: InMemoryUserRepository;
-  let publisher: UserEventPublisher;
+  let publishUserCreated: jest.Mock;
+  let publisher: jest.Mocked<UserEventPublisher>;
 
   beforeEach(async () => {
+    publishUserCreated = jest.fn().mockResolvedValue(undefined);
     publisher = {
-      publishUserCreated: jest.fn().mockResolvedValue(undefined),
-    };
+      publishUserCreated,
+    } as jest.Mocked<UserEventPublisher>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,7 +37,7 @@ describe('CreateUserService', () => {
     repository = module.get<InMemoryUserRepository>('UserRepository');
   });
 
-  it('should create a user and publish event', async () => {
+  it('[TC-USER-001] should create a user and publish event', async () => {
     const id = 'uuid-1';
     const email = 'test@example.com';
 
@@ -46,7 +48,7 @@ describe('CreateUserService', () => {
     expect(user?.getEmail().getValue()).toBe(email);
     expect(user?.getStatus()).toBe(UserStatus.PENDING);
     expect(user?.getRole()).toBe(UserRole.USER);
-    expect(publisher.publishUserCreated).toHaveBeenCalled();
+    expect(publishUserCreated).toHaveBeenCalled();
   });
 
   it('should create a user with specified role', async () => {
@@ -59,13 +61,25 @@ describe('CreateUserService', () => {
     expect(user?.getRole()).toBe(UserRole.ADMIN);
   });
 
-  it('should be idempotent by ID', async () => {
+  it('[TC-USER-002] should fail if email already exists', async () => {
+    const id1 = 'uuid-1';
+    const id2 = 'uuid-2';
+    const email = 'duplicate@example.com';
+
+    await service.execute(id1, email);
+
+    await expect(service.execute(id2, email)).rejects.toThrow(
+      `Email already exists: ${email}`,
+    );
+  });
+
+  it('[TC-USER-003] should be idempotent by ID', async () => {
     const id = 'uuid-1';
     const email = 'test@example.com';
 
     await service.execute(id, email);
     await service.execute(id, email);
 
-    expect(publisher.publishUserCreated).toHaveBeenCalledTimes(1);
+    expect(publishUserCreated).toHaveBeenCalledTimes(1);
   });
 });

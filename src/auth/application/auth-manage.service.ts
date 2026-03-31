@@ -28,7 +28,10 @@ export class LoginService {
     }
 
     // 2. Verify password
-    const isValid = await this.passwordHasher.compare(password, authUser.getPasswordHash());
+    const isValid = await this.passwordHasher.compare(
+      password,
+      authUser.getPasswordHash(),
+    );
     if (!isValid) {
       throw new Error('Invalid credentials');
     }
@@ -54,7 +57,7 @@ export class ValidateTokenService {
     private readonly tokenProvider: TokenProvider,
   ) {}
 
-  public async execute(token: string): Promise<any> {
+  public async execute(token: string): Promise<unknown> {
     return this.tokenProvider.validate(token);
   }
 }

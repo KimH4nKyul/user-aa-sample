@@ -329,3 +329,42 @@ This document MUST be treated as:
 - execution controller
 
 ALL actions MUST comply with this document.
+
+---
+
+## TDD RULE (CRITICAL)
+
+Before implementation:
+
+- MUST read domain TDD document
+- MUST derive required components from test cases
+
+Implementation MUST:
+- satisfy all test cases
+
+MUST NOT:
+- implement without test definition
+
+---
+
+## TDD EXECUTION FLOW
+
+1. Read tdd.md
+2. Extract test cases
+3. Identify required components
+4. Implement minimal code to pass tests
+5. Run tests
+6. Fix failures
+7. Refactor
+
+REPEAT until all tests pass
+
+---
+
+## TEST COMPLETION RULE
+
+A task is NOT complete until:
+
+- All test cases are implemented
+- All tests pass
+- No failing scenarios remain

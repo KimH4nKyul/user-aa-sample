@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { UserDomainService } from './domain/service/user-domain.service';
 import { CreateUserService } from './application/create-user.service';
-import { GetUserService, ActivateUserService, DeactivateUserService } from './application/user-manage.service';
+import {
+  GetUserService,
+  ActivateUserService,
+  DeactivateUserService,
+} from './application/user-manage.service';
 import { UserController } from './entry-point/http-api/user.controller';
 import { UserConsumer } from './entry-point/consumer/user.consumer';
 import { InMemoryUserRepository } from './infrastructure/database/in-memory-user.repository';

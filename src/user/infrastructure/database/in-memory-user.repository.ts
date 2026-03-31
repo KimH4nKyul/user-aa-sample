@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../domain/repository/user.repository';
+import type { UserRepository } from '../../domain/repository/user.repository';
 import { User } from '../../domain/model/user.entity';
 import { Email } from '../../domain/model/email.vo';
 
@@ -7,26 +7,28 @@ import { Email } from '../../domain/model/email.vo';
 export class InMemoryUserRepository implements UserRepository {
   private readonly users: Map<string, User> = new Map();
 
-  async save(user: User): Promise<void> {
+  save(user: User): Promise<void> {
     this.users.set(user.getId(), user);
+    return Promise.resolve();
   }
 
-  async findByEmail(email: Email): Promise<User | null> {
+  findByEmail(email: Email): Promise<User | null> {
     for (const user of this.users.values()) {
       if (user.getEmail().equals(email)) {
-        return user;
+        return Promise.resolve(user);
       }
     }
-    return null;
+    return Promise.resolve(null);
   }
 
-  async existsByEmail(email: Email): Promise<boolean> {
-    const user = await this.findByEmail(email);
-    return user !== null;
+  existsByEmail(email: Email): Promise<boolean> {
+    const user = Array.from(this.users.values()).find((u) =>
+      u.getEmail().equals(email),
+    );
+    return Promise.resolve(!!user);
   }
 
-  async findById(id: string): Promise<User | null> {
-    const user = this.users.get(id);
-    return user || null;
+  findById(id: string): Promise<User | null> {
+    return Promise.resolve(this.users.get(id) || null);
   }
 }

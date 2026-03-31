@@ -11,7 +11,11 @@ export class User {
     private readonly createdAt: Date,
   ) {}
 
-  public static create(id: string, email: Email, role: UserRole = UserRole.USER): User {
+  public static create(
+    id: string,
+    email: Email,
+    role: UserRole = UserRole.USER,
+  ): User {
     return new User(id, email, UserStatus.PENDING, role, new Date());
   }
 

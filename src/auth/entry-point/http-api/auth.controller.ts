@@ -1,6 +1,9 @@
 import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
 import { SignupService } from '../../application/signup.service';
-import { LoginService, ValidateTokenService } from '../../application/auth-manage.service';
+import {
+  LoginService,
+  ValidateTokenService,
+} from '../../application/auth-manage.service';
 
 @Controller('auth')
 export class AuthController {
@@ -11,8 +14,11 @@ export class AuthController {
   ) {}
 
   @Post('signup')
-  async signup(@Body() body: any) {
-    const authUser = await this.signupService.execute(body.email, body.password);
+  async signup(@Body() body: Record<string, string>) {
+    const authUser = await this.signupService.execute(
+      body.email,
+      body.password,
+    );
     return {
       id: authUser.getId(),
       email: authUser.getEmail().getValue(),
@@ -20,8 +26,11 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: any) {
-    const accessToken = await this.loginService.execute(body.email, body.password);
+  async login(@Body() body: Record<string, string>) {
+    const accessToken = await this.loginService.execute(
+      body.email,
+      body.password,
+    );
     return { accessToken };
   }
 
@@ -31,7 +40,9 @@ export class AuthController {
       throw new Error('Authorization header missing');
     }
     const token = authHeader.split(' ')[1];
-    const payload = await this.validateTokenService.execute(token);
+    const payload = (await this.validateTokenService.execute(token)) as {
+      sub: string;
+    };
     return {
       userId: payload.sub,
       valid: true,

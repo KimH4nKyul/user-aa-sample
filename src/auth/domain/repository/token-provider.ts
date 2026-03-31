@@ -1,4 +1,4 @@
 export interface TokenProvider {
-  issue(payload: any): Promise<string>;
-  validate(token: string): Promise<any>;
+  issue(payload: Record<string, unknown>): Promise<string>;
+  validate(token: string): Promise<unknown>;
 }

@@ -7,21 +7,24 @@ import { Email } from '../../domain/model/email.vo';
 export class InMemoryAuthUserRepository implements AuthUserRepository {
   private readonly users: Map<string, AuthUser> = new Map();
 
-  async findByEmail(email: Email): Promise<AuthUser | null> {
+  findByEmail(email: Email): Promise<AuthUser | null> {
     for (const user of this.users.values()) {
       if (user.getEmail().equals(email)) {
-        return user;
+        return Promise.resolve(user);
       }
     }
-    return null;
+    return Promise.resolve(null);
   }
 
-  async save(authUser: AuthUser): Promise<void> {
+  save(authUser: AuthUser): Promise<void> {
     this.users.set(authUser.getId(), authUser);
+    return Promise.resolve();
   }
 
-  async existsByEmail(email: Email): Promise<boolean> {
-    const user = await this.findByEmail(email);
-    return user !== null;
+  existsByEmail(email: Email): Promise<boolean> {
+    const user = Array.from(this.users.values()).find((u) =>
+      u.getEmail().equals(email),
+    );
+    return Promise.resolve(!!user);
   }
 }

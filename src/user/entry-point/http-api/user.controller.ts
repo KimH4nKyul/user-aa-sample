@@ -1,5 +1,9 @@
 import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
-import { GetUserService, ActivateUserService, DeactivateUserService } from '../../application/user-manage.service';
+import {
+  GetUserService,
+  ActivateUserService,
+  DeactivateUserService,
+} from '../../application/user-manage.service';
 import { Roles } from '../../../auth/entry-point/http-api/roles.decorator';
 import { RolesGuard } from '../../../auth/entry-point/http-api/roles.guard';
 import { UserRole } from '../../../shared/types/user-role.enum';

@@ -16,7 +16,11 @@ export class CreateUserService {
     private readonly userEventPublisher: UserEventPublisher,
   ) {}
 
-  public async execute(id: string, emailStr: string, role: UserRole = UserRole.USER): Promise<void> {
+  public async execute(
+    id: string,
+    emailStr: string,
+    role: UserRole = UserRole.USER,
+  ): Promise<void> {
     // 0. Idempotency check
     const existingUser = await this.userRepository.findById(id);
     if (existingUser) {

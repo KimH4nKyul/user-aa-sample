@@ -3,12 +3,11 @@ import type { PasswordHasher } from '../../domain/repository/password-hasher';
 
 @Injectable()
 export class SimplePasswordHasher implements PasswordHasher {
-  async hash(password: string): Promise<string> {
-    // Simplified hashing for this example
-    return `hashed_${password}`;
+  hash(password: string): Promise<string> {
+    return Promise.resolve(`hashed_${password}`);
   }
 
-  async compare(password: string, hash: string): Promise<boolean> {
-    return `hashed_${password}` === hash;
+  compare(password: string, hash: string): Promise<boolean> {
+    return Promise.resolve(hash === `hashed_${password}`);
   }
 }
